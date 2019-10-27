@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2015 Luis Henrique O. Rios
+ * Copyright 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -19,22 +19,30 @@
 
 package uiso;
 
-class UIsoObjectsGridCell extends LinkedListElement {
-	/* Package: */
-	UIsoObject isometric_engine_object;
+public class Rectangle {
+	/* Public: */
+	public int w, h;
 
-	void insertObject(UIsoObject object, int vertex) {
-		UIsoObject previous_first_object = this.isometric_engine_object;
+	/**
+	 * Copies the data from {@code r} to this instance
+	 * 
+	 * @param p
+	 *           the instance from where the data will be copied
+	 */
+	public void copyFrom(Rectangle r) {
+		this.w = r.w;
+		this.h = r.h;
+	}
 
-		this.isometric_engine_object = object;
-		object.setValueToVertex(this, previous_first_object, vertex);
-		if (previous_first_object == null)
-			return;
+	@Override
+	public String toString() {
+		return "[" + this.w + "," + this.h + "]";
+	}
 
-		int aux = previous_first_object.getVertexFromPreviousElement(this);
-
-		previous_first_object.setValueToPreviousVertexField(object, aux);
-		previous_first_object.setVertexOfPreviousElementThatContinuesTheListInVertex(vertex, aux);
-		object.setVertexOfNextElementThatContinuesTheListInVertex(aux, vertex);
+	@Override
+	public Object clone() {
+		Rectangle r = new Rectangle();
+		r.copyFrom(this);
+		return r;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -29,6 +29,7 @@ import uiso.Tile;
 import uiso.UIsoEngine;
 import uiso_awt_demo.map.MyTile;
 import uiso_awt_demo.object.Alignment;
+import uiso_awt_demo.object.AnimatedString;
 import uiso_awt_demo.object.CastleBuilder;
 import uiso_awt_demo.object.Minotaur;
 import uiso_awt_demo.util.RandomUtils;
@@ -39,8 +40,8 @@ class SimulationState {
 	public SimulationState(UIsoEngine uiso_engine) {
 
 		/* Random generates scenario tile heights. */
-		for (int y = SimulationConstants.EDITABLE_AREA.y; y <= SimulationConstants.EDITABLE_AREA.y + SimulationConstants.EDITABLE_AREA.height; y++) {
-			for (int x = SimulationConstants.EDITABLE_AREA.x; x <= SimulationConstants.EDITABLE_AREA.y + SimulationConstants.EDITABLE_AREA.width; x++) {
+		for (int y = SimulationConstants.EDITABLE_AREA.y; y <= SimulationConstants.EDITABLE_AREA.y + SimulationConstants.EDITABLE_AREA.height; y += 4) {
+			for (int x = SimulationConstants.EDITABLE_AREA.x; x <= SimulationConstants.EDITABLE_AREA.y + SimulationConstants.EDITABLE_AREA.width; x += 4) {
 				int z = this.random.nextInt(SimulationConstants.UISO_CONFIGURATION.tile_max_z + 1);
 				Tile tile = uiso_engine.getTile(x, y);
 				if (uiso_engine.canSetTileZ(tile, z))
@@ -111,19 +112,27 @@ class SimulationState {
 		uiso_engine.insertObject(string_object);
 
 		CastleBuilder castle_builder =
-				new CastleBuilder(SimulationConstants.CASTLE_LAND_AREA, Alignment.LEFT_ALIGNMENT, Alignment.CENTER_ALIGNMENT, SimulationConstants.CASTLE_BLUE_PRINTS);
+				new CastleBuilder(SimulationConstants.CASTLE_LAND_AREA, Alignment.LEFT_ALIGNMENT, Alignment.CENTER_ALIGNMENT, SimulationConstants.CASTLE_BLUEPRINT);
 		castle_builder.build(uiso_engine);
 		MyTile minotaur_initial_tile = castle_builder.getEspecialTilesMap().get('M');
 
 		this.minotaur = new Minotaur();
-		this.minotaur.setX(uiso_engine.getTileX(minotaur_initial_tile) * SimulationConstants.TILE_VIRTUAL_SIZE + SimulationConstants.TILE_VIRTUAL_SIZE / 2);
-		this.minotaur.setY(uiso_engine.getTileY(minotaur_initial_tile) * SimulationConstants.TILE_VIRTUAL_SIZE + SimulationConstants.TILE_VIRTUAL_SIZE / 2);
+		this.minotaur.setX(uiso_engine.getTileX(minotaur_initial_tile) * SimulationConstants.TILE_VIRTUAL_SIZE + Minotaur.TILE_OFFSET_X);
+		this.minotaur.setY(uiso_engine.getTileY(minotaur_initial_tile) * SimulationConstants.TILE_VIRTUAL_SIZE + Minotaur.TILE_OFFSET_Y);
 		uiso_engine.insertObject(this.minotaur);
 
-		uiso_engine.scrollToTile(minotaur_initial_tile);
+		MyTile castle_entrance_tile = castle_builder.getEspecialTilesMap().get('E');
+		this.castle_entrance = new AnimatedString("Castle Entrance");
+		this.castle_entrance.setFont(SimulationConstants.ANIMATED_TEXT_FONT);
+		this.castle_entrance.setColor(SimulationConstants.ANIMATED_TEXT_COLOR);
+		this.castle_entrance.setX(uiso_engine.getTileX(castle_entrance_tile) * SimulationConstants.TILE_VIRTUAL_SIZE);
+		this.castle_entrance.setY(uiso_engine.getTileY(castle_entrance_tile) * SimulationConstants.TILE_VIRTUAL_SIZE);
+		uiso_engine.insertObject(this.castle_entrance);
 
+		uiso_engine.scrollToTile(minotaur_initial_tile);
 	}
 
+	public AnimatedString castle_entrance;
 	public Minotaur minotaur;
 	public Random random = new Random();
 	public int tick;

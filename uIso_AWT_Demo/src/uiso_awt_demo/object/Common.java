@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -28,7 +28,7 @@ import uiso.util.sprite_loader.SimpleSpriteLoader;
 import uiso_awt_demo.image.JavaSEImageManipulator;
 
 public class Common {
-	// TODO: Consider the possibility of a second parameterized Enum. For example, Minoutaur has directions and states.
+	/* TODO: Consider the possibility of a second parameterized Enum. For example, Minoutaur has directions and states. */
 	@SuppressWarnings("unchecked")
 	public static <E extends Enum<E>> Map<Integer, Sprite> createSpritesFromImage(String path, int w, int h, List<E> enums, int sprites_per_direction) {
 		JavaSEImageManipulator javaSEImageManipulator = new JavaSEImageManipulator();

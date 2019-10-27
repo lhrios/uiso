@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -20,16 +20,9 @@
 package uiso;
 
 /**
- * Represents a sprite that will be used to draw a {@link SpriteObject} (that can have an arbitrary number of sprites). A sprite has an 2D anchor point, an 3D bounding
- * box with offsets and an image. The anchor is the point that is drawn as (0,0) when the image is drawn. The bounding box is used to sort the sprites (in order to create
- * the 3D illusion) at the moment they will be drawn. It needs to wrap the volume of the object sprite it is representing. As the bounding box is defined inside the
- * engine simulation, it employs the virtual coordinate system. This class also implements {@link Cloneable} interface (this could not be done explicit because some ME
- * versions does not include it).
- * 
- * <pre>
- * References: 
- * - Bounding box idea: OpenTTD isometric engine.
- * </pre>
+ * Represents a sprite that will be used to draw a {@link SpriteObject} (that can have an arbitrary number of sprites). A sprite has an 2D anchor point and an image. The
+ * anchor is the point that is drawn as (0,0) when the image is drawn. This class also implements {@link Cloneable} interface (this could not be done explicit because
+ * some ME versions does not include it).
  * 
  * @author luis
  */
@@ -51,54 +44,6 @@ public class Sprite {
 		this.anchor_y = anchor_y;
 	}
 
-	public int getBoundingBoxW() {
-		return this.bounding_box_w;
-	}
-
-	public int getBoundingBoxL() {
-		return this.bounding_box_l;
-	}
-
-	public int getBoundingBoxH() {
-		return this.bounding_box_h;
-	}
-
-	public int getBoundingBoxOffsetX() {
-		return this.bounding_box_offset_x;
-	}
-
-	public int getBoundingBoxOffsetY() {
-		return this.bounding_box_offset_y;
-	}
-
-	public int getBoundingBoxOffsetZ() {
-		return this.bounding_box_offset_z;
-	}
-
-	public void setBoundingBoxW(int w) {
-		this.bounding_box_w = w;
-	}
-
-	public void setBoundingBoxH(int h) {
-		this.bounding_box_h = h;
-	}
-
-	public void setBoundingBoxL(int l) {
-		this.bounding_box_l = l;
-	}
-
-	public void setBoundingBoxOffsetX(int bounding_box_offset_x) {
-		this.bounding_box_offset_x = bounding_box_offset_x;
-	}
-
-	public void setBoundingBoxOffsetY(int bounding_box_offset_y) {
-		this.bounding_box_offset_y = bounding_box_offset_y;
-	}
-
-	public void setBoundingBoxOffsetZ(int bounding_box_offset_z) {
-		this.bounding_box_offset_z = bounding_box_offset_z;
-	}
-
 	public UIsoImage getImage() {
 		return this.image;
 	}
@@ -114,17 +59,11 @@ public class Sprite {
 		o.image = this.image;
 		o.anchor_x = this.anchor_x;
 		o.anchor_y = this.anchor_y;
-		o.bounding_box_w = this.bounding_box_w;
-		o.bounding_box_h = this.bounding_box_h;
-		o.bounding_box_l = this.bounding_box_l;
-		o.bounding_box_offset_x = this.bounding_box_offset_x;
-		o.bounding_box_offset_y = this.bounding_box_offset_y;
-		o.bounding_box_offset_z = this.bounding_box_offset_z;
 
 		return o;
 	}
 
 	/* Package: */
 	UIsoImage image;
-	int anchor_x, anchor_y, bounding_box_w, bounding_box_h, bounding_box_l, bounding_box_offset_x, bounding_box_offset_y, bounding_box_offset_z;
+	int anchor_x, anchor_y;
 }

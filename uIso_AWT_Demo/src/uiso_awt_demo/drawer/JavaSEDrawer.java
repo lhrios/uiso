@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uiso.Point;
+import uiso.Rectangle;
 import uiso.Sprite;
 import uiso.SpriteObject;
 import uiso.Tile;
@@ -55,25 +55,25 @@ public class JavaSEDrawer implements IDrawer {
 			List<Sprite> sprites;
 			int i = 0;
 
-			sprites = simpleSpriteLoader.createSpritesFromImage("real_grass_slopes.png", 128, 96, Tile.N_SLOPES);
+			sprites = simpleSpriteLoader.createSpritesFromImage("grass_slopes.png", 64, 40, Tile.N_SLOPES);
 			for (Sprite s : sprites) {
 				this.grass_sprites.put(i++, s);
 			}
 
-			sprites = simpleSpriteLoader.createSpritesFromImage("selection_slopes.png", 128, 96, Tile.N_SLOPES);
+			sprites = simpleSpriteLoader.createSpritesFromImage("selection_slopes.png", 64, 40, Tile.N_SLOPES);
 			i = 0;
 			for (Sprite s : sprites) {
 				this.selection_sprites.put(i++, s);
 			}
 
-			sprites = simpleSpriteLoader.createSpritesFromImage("bare_land_slopes.png", 128, 96, Tile.N_SLOPES);
+			sprites = simpleSpriteLoader.createSpritesFromImage("bare_land_slopes.png", 64, 40, Tile.N_SLOPES);
 			i = 0;
 			for (Sprite s : sprites) {
 				this.bare_land.put(i++, s);
 			}
 
 			this.castle_floor =
-					Common.createSpritesFromImage("castle_floor.png", 128, 96, Arrays.asList(new TileType[]{TileType.CASTLE_FLOOR_FULL,
+					Common.createSpritesFromImage("castle_floor.png", 64, 40, Arrays.asList(new TileType[]{TileType.CASTLE_FLOOR_FULL,
 							TileType.CASTLE_FLOOR_SE,
 							TileType.CASTLE_FLOOR_NW,
 							TileType.CASTLE_FLOOR_NE,
@@ -84,9 +84,6 @@ public class JavaSEDrawer implements IDrawer {
 		this.wall.setImage(JavaSEImage.loadJavaSEImage("wall.png"));
 		this.wall.setAnchorX(15);
 		this.wall.setAnchorY(119);
-		this.wall.setBoundingBoxW(8);
-		this.wall.setBoundingBoxL(8);
-		this.wall.setBoundingBoxH(8);
 
 		this.canvas_h = canvas_h;
 		this.canvas_w = canvas_w;
@@ -96,33 +93,38 @@ public class JavaSEDrawer implements IDrawer {
 	 * TODO: There are better ways to draw a multiline text. For example, with LineBreakMeasurer.
 	 */
 	public static void drawString(Graphics2D g2, int x, int y, String s, Font font, Color color, Color background_color) {
-		g2.setFont(font);
-		g2.setColor(color);
-
-		String[] lines = s.split("\n");
-		for (String line : lines) {
-			FontMetrics fontMetrics = getFontMetrics(g2, font);
-
-			if (background_color != null) {
-				getStringBounds(g2, line, string_bounds, font);
-				g2.setColor(background_color);
-				g2.fillRect(x, y, string_bounds.x, string_bounds.y);
-			}
-
+		if (s != null) {
+			g2.setFont(font);
 			g2.setColor(color);
-			g2.drawString(line, x, y + fontMetrics.getAscent());
-			y += fontMetrics.getHeight();
+
+			String[] lines = s.split("\n");
+			for (String line : lines) {
+				FontMetrics fontMetrics = getFontMetrics(g2, font);
+
+				if (background_color != null) {
+					getStringBounds(g2, line, string_bounds, font);
+					g2.setColor(background_color);
+					g2.fillRect(x, y, string_bounds.w, string_bounds.h);
+				}
+
+				g2.setColor(color);
+				g2.drawString(line, x, y + fontMetrics.getAscent());
+				y += fontMetrics.getHeight();
+			}
 		}
 	}
 
-	public static void getStringBounds(Graphics2D g2, String s, Point bounds, Font font) {
-		FontMetrics fontMetrics = getFontMetrics(g2, font);
-		bounds.x = bounds.y = 0;
+	public static void getStringBounds(Graphics2D g2, String s, Rectangle bounds, Font font) {
+		bounds.w = bounds.h = 0;
 
-		String[] lines = s.split("\n");
-		for (String line : lines) {
-			bounds.y += fontMetrics.getHeight();
-			bounds.x = Math.max(bounds.x, fontMetrics.stringWidth(line));
+		if (s != null) {
+			FontMetrics fontMetrics = getFontMetrics(g2, font);
+
+			String[] lines = s.split("\n");
+			for (String line : lines) {
+				bounds.h += fontMetrics.getHeight();
+				bounds.w = Math.max(bounds.w, fontMetrics.stringWidth(line));
+			}
 		}
 	}
 
@@ -156,7 +158,7 @@ public class JavaSEDrawer implements IDrawer {
 	}
 
 	@Override
-	public void getStringBounds(String s, Point bounds, Object font) {
+	public void getStringBounds(String s, Rectangle bounds, Object font) {
 		getStringBounds(this.g2, s, bounds, (Font) font);
 	}
 
@@ -181,7 +183,7 @@ public class JavaSEDrawer implements IDrawer {
 			break;
 		}
 
-		if (tile == this.selected_tile) {
+		if (tile == this.selected_tile && myTile.getTileType() != TileType.BARE_GROUND) {
 			sprites[1] = this.selection_sprites.get(tile_index);
 			sprites[2] = null;
 		} else
@@ -230,7 +232,7 @@ public class JavaSEDrawer implements IDrawer {
 	/* Package: */
 
 	/* Private: */
-	private static Point string_bounds = new Point();
+	private static Rectangle string_bounds = new Rectangle();
 
 	private Map<Integer, Sprite> grass_sprites = new HashMap<Integer, Sprite>(), selection_sprites = new HashMap<Integer, Sprite>(),
 			bare_land = new HashMap<Integer, Sprite>(), castle_floor = new HashMap<Integer, Sprite>();

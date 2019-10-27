@@ -17,24 +17,35 @@
  * along with uIsometric Engine.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uiso;
+package uiso_awt_demo.gui;
 
-class UIsoObjectsGridCell extends LinkedListElement {
-	/* Package: */
-	UIsoObject isometric_engine_object;
+import java.awt.Canvas;
+import java.awt.EventQueue;
 
-	void insertObject(UIsoObject object, int vertex) {
-		UIsoObject previous_first_object = this.isometric_engine_object;
+import uiso_awt_demo.simulation.SimulationCoordinator;
 
-		this.isometric_engine_object = object;
-		object.setValueToVertex(this, previous_first_object, vertex);
-		if (previous_first_object == null)
-			return;
-
-		int aux = previous_first_object.getVertexFromPreviousElement(this);
-
-		previous_first_object.setValueToPreviousVertexField(object, aux);
-		previous_first_object.setVertexOfPreviousElementThatContinuesTheListInVertex(vertex, aux);
-		object.setVertexOfNextElementThatContinuesTheListInVertex(aux, vertex);
+public class MyCanvas extends Canvas {
+	/* Public: */
+	public MyCanvas(SimulationCoordinator simulation_coordinator) {
+		this.simulation_coordinator = simulation_coordinator;
+		this.setIgnoreRepaint(true);
 	}
+
+	@Override
+	public void addNotify() {
+		super.addNotify();
+
+		EventQueue.invokeLater(new Runnable() {
+
+			@Override
+			public void run() {
+				MyCanvas.this.simulation_coordinator.init();
+			}
+		});
+	}
+
+	/* Private: */
+	private static final long serialVersionUID = -1785897683046485515L;
+
+	private SimulationCoordinator simulation_coordinator;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -31,19 +31,21 @@ import uiso_awt_demo.util.DistanceUtils;
 
 public class Minotaur extends MySpriteObjectWithDirection {
 	/* Public: */
+	/* These constants are used to position the Minotaur at the center of a tile. */
+	public static final int TILE_OFFSET_X = 0;
+	public static final int TILE_OFFSET_Y = 4;
+
 	/* TODO: Improve this code. Both loops are doing almost the same thing. */
 	public static Map<Integer, Sprite> createSprites() {
 		Map<Integer, Sprite> return_map = new HashMap<Integer, Sprite>();
 		final Direction directions[] = {Direction.W, Direction.NW, Direction.N, Direction.NE, Direction.E, Direction.SE, Direction.S, Direction.SW};
 
 		Map<Integer, Sprite> sprites = Common.createSpritesFromImage("minotaur_walking.png", 126, 126, Arrays.asList(directions), 8);
-		MySpriteObject.setBoundingBox(sprites.values(), 3, 3, 0, 10, 10, 32);
 		for (Map.Entry<Integer, Sprite> e : sprites.entrySet()) {
 			return_map.put(State.WALKING.ordinal() << 16 | e.getKey(), e.getValue());
 		}
 
 		sprites = Common.createSpritesFromImage("minotaur_stopped.png", 126, 126, Arrays.asList(directions), 4);
-		MySpriteObject.setBoundingBox(sprites.values(), 3, 3, 0, 10, 10, 32);
 		for (Map.Entry<Integer, Sprite> e : sprites.entrySet()) {
 			return_map.put(State.STOPPED.ordinal() << 16 | e.getKey(), e.getValue());
 		}
@@ -58,8 +60,8 @@ public class Minotaur extends MySpriteObjectWithDirection {
 	}
 
 	@Override
-	public void update(int tick) {
-		final int DELTA_MODULE = 3;
+	public void update(UIsoEngine uiso_engine, int tick) {
+		final int DELTA_MODULE = 4;
 
 		if (this.state == State.WALKING) {
 
@@ -92,12 +94,12 @@ public class Minotaur extends MySpriteObjectWithDirection {
 
 					if (delta_x == 0 && delta_y == 0) {
 						if (this.next_point_index < this.path.size()) {
-							this.destination_x = this.path.get(this.next_point_index).x;
-							this.destination_y = this.path.get(this.next_point_index).y;
+							this.destination_x = this.path.get(this.next_point_index).x + TILE_OFFSET_X;
+							this.destination_y = this.path.get(this.next_point_index).y + TILE_OFFSET_Y;
 							this.next_point_index++;
 						} else {
 							this.stopped_state_index = 0;
-							this.setSpriteIndex(stopped_state_sprite_index[this.stopped_state_index]);
+							this.setSpriteIndex(STOPPED_STATE_SPRITE_INDEX[this.stopped_state_index]);
 							this.state = State.STOPPED;
 							compute_delta = false;
 						}
@@ -110,6 +112,7 @@ public class Minotaur extends MySpriteObjectWithDirection {
 
 						this.setX(this.getX() + delta_x);
 						this.setY(this.getY() + delta_y);
+						uiso_engine.informObjectMotion(this);
 					}
 				}
 			}
@@ -123,7 +126,7 @@ public class Minotaur extends MySpriteObjectWithDirection {
 				if (max_sprites <= this.stopped_state_index) {
 					this.stopped_state_index = 0;
 				}
-				this.setSpriteIndex(stopped_state_sprite_index[this.stopped_state_index]);
+				this.setSpriteIndex(STOPPED_STATE_SPRITE_INDEX[this.stopped_state_index]);
 			}
 		}
 
@@ -138,11 +141,11 @@ public class Minotaur extends MySpriteObjectWithDirection {
 			if (path.size() > 1
 					&& DistanceUtils.euclideanDistance(this.getX(), this.getY(), path.get(0).x, path.get(0).y) >= DistanceUtils.euclideanDistance(path.get(1).x,
 							path.get(0).y, path.get(0).x, path.get(0).y)) {
-				this.destination_x = path.get(1).x;
-				this.destination_y = path.get(1).y;
+				this.destination_x = path.get(1).x + TILE_OFFSET_X;
+				this.destination_y = path.get(1).y + TILE_OFFSET_Y;
 			} else {
-				this.destination_x = path.get(0).x;
-				this.destination_y = path.get(0).y;
+				this.destination_x = path.get(0).x + TILE_OFFSET_X;
+				this.destination_y = path.get(0).y + TILE_OFFSET_Y;
 			}
 
 			this.state = State.WALKING;
@@ -161,10 +164,11 @@ public class Minotaur extends MySpriteObjectWithDirection {
 	}
 
 	/* Private: */
+	private static final int STOPPED_STATE_SPRITE_INDEX[] = {0, 1, 2, 3, 3, 2, 1, 0};
+
 	private List<Point> path;
 	private int next_point_index;
 	private State state;
 	private int destination_x, destination_y, stopped_state_index;
 
-	private static final int stopped_state_sprite_index[] = {0, 1, 2, 3, 3, 2, 1, 0};
 }

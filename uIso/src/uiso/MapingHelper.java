@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -21,9 +21,9 @@ package uiso;
 
 class MapingHelper {
 	/* Public: */
-	public MapingHelper(int tile_w, int tile_h, int virtual_world_tile_size) {
-		this.a = new int[Tile.N_SLOPES][];
-		this.b = new int[Tile.N_SLOPES][];
+	public MapingHelper(int tile_w, int tile_h, int virtual_world_tile_size, int slope_height) {
+		this.a = new float[Tile.N_SLOPES][];
+		this.b = new float[Tile.N_SLOPES][];
 
 		Point[] points = new Point[4];
 		for (int i = 0; i < points.length; i++) {
@@ -41,12 +41,12 @@ class MapingHelper {
 			s_z = Tile.corner_s_z_relative_to_min_z[i];
 			w_z = Tile.corner_w_z_relative_to_min_z[i];
 
-			this.a[i] = new int[4];
-			this.b[i] = new int[4];
-			points[POINT_N].y = ((-n_z) * virtual_world_tile_size);
-			points[POINT_E].y = ((-e_z) * virtual_world_tile_size + virtual_world_tile_size);
-			points[POINT_S].y = ((-s_z) * virtual_world_tile_size + (virtual_world_tile_size << 1));
-			points[POINT_W].y = ((-w_z) * virtual_world_tile_size + virtual_world_tile_size);
+			this.a[i] = new float[4];
+			this.b[i] = new float[4];
+			points[POINT_N].y = ((-n_z) * slope_height);
+			points[POINT_E].y = ((-e_z) * slope_height + virtual_world_tile_size);
+			points[POINT_S].y = ((-s_z) * slope_height + (virtual_world_tile_size << 1));
+			points[POINT_W].y = ((-w_z) * slope_height + virtual_world_tile_size);
 
 			for (int j = 0; j < 4; j++) {
 				this.computeLineConstants(points[LINE_POINTS[j][0]], points[LINE_POINTS[j][1]], i, j);
@@ -66,7 +66,8 @@ class MapingHelper {
 	 * @return the relative position
 	 */
 	public int getPositionRelativeToSlopePolygon(Point point, int slope_index) {
-		int position = UIsoConstants.INSIDE_POLYGON, point_position;
+		int position = UIsoConstants.INSIDE_POLYGON;
+		float point_position;
 		point_position = this.getPointPositionRelativeLine(point, slope_index, NE_LINE);
 		if (point_position <= 0) {
 
@@ -92,28 +93,9 @@ class MapingHelper {
 		return position;
 	}
 
-	public int getPointPositionRelativeLine(Point point, int slope_index, int line) {
-		int a = this.a[slope_index][line], b = this.b[slope_index][line], y = 0;
-		switch (a) {
-			case ZERO:
-				y = b;
-			break;
-			case ONE_HALF:
-				y = b + (point.x >> 1);
-			break;
-			case MINUS_ONE_HALF:
-				y = b - (point.x >> 1);
-			break;
-			case ONE:
-				y = b + point.x;
-			break;
-			case MINUS_ONE:
-				y = b - point.x;
-			break;
-			default:
-				assert (false);
-			break;
-		}
+	public float getPointPositionRelativeLine(Point point, int slope_index, int line) {
+		float a = this.a[slope_index][line], b = this.b[slope_index][line], y = 0;
+		y = b + a * point.x;
 		return y - point.y;
 	}
 
@@ -136,39 +118,16 @@ class MapingHelper {
 	private final static int ES_LINE = 1;
 	private final static int SW_LINE = 2;
 	private final static int WN_LINE = 3;
-	private final static int ZERO = 0;
-	private final static int ONE_HALF = 1;
-	private final static int MINUS_ONE_HALF = 2;
-	private final static int ONE = 3;
-	private final static int MINUS_ONE = 4;
 
 	private static int[][] LINE_POINTS = {{POINT_N, POINT_E}, {POINT_E, POINT_S}, {POINT_S, POINT_W}, {POINT_W, POINT_N}};
 
-	private static int mapToInt(float number) {
-		if (number == 0.0f) {
-			return ZERO;
-		} else if (number == 0.5f) {
-			return ONE_HALF;
-		} else if (number == -0.5f) {
-			return MINUS_ONE_HALF;
-		} else if (number == 1.0f) {
-			return ONE;
-		} else if (number == -1.0f) {
-			return MINUS_ONE;
-		} else {
-			assert (false);
-		}
-		return ZERO;
-	}
-
-	private int[][] a, b;
+	private float[][] a, b;
 
 	private void computeLineConstants(Point line_point_a, Point line_point_b, int slope_index, int line) {
 		assert (line_point_a.x - line_point_b.x != 0);
 		float a = (float) (line_point_a.y - line_point_b.y) / (float) (line_point_a.x - line_point_b.x);
 		float b = (line_point_b.y) - (a * (line_point_b.x));
-		assert (b - ((int) b) == 0);
-		this.a[slope_index][line] = mapToInt(a);
-		this.b[slope_index][line] = (int) b;
+		this.a[slope_index][line] = a;
+		this.b[slope_index][line] = b;
 	}
 }

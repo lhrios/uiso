@@ -17,24 +17,17 @@
  * along with uIsometric Engine.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uiso;
+package uiso.interfaces;
 
-class UIsoObjectsGridCell extends LinkedListElement {
-	/* Package: */
-	UIsoObject isometric_engine_object;
+import uiso.UIsoEngine;
+import uiso.UIsoObject;
 
-	void insertObject(UIsoObject object, int vertex) {
-		UIsoObject previous_first_object = this.isometric_engine_object;
-
-		this.isometric_engine_object = object;
-		object.setValueToVertex(this, previous_first_object, vertex);
-		if (previous_first_object == null)
-			return;
-
-		int aux = previous_first_object.getVertexFromPreviousElement(this);
-
-		previous_first_object.setValueToPreviousVertexField(object, aux);
-		previous_first_object.setVertexOfPreviousElementThatContinuesTheListInVertex(vertex, aux);
-		object.setVertexOfNextElementThatContinuesTheListInVertex(aux, vertex);
-	}
+/**
+ * Compares two {@link UIsoObject} and decides which one must be drawn first. As this class is used to sort {@link UIsoObject}, the criteria must be transitive.
+ * 
+ * @author luis
+ */
+public interface IUIsoObjectComparator {
+	/* Public: */
+	public abstract boolean doesBMustBeDrawnBeforeA(UIsoEngine uiso_engine, UIsoObject a, UIsoObject b);
 }

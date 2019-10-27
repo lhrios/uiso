@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -55,7 +55,7 @@ public class TerraformUtils {
 		setTileHeight(uiso_engine, uiso_engine.getTile(tile_x + 1, tile_y + 1), tile_z);
 	}
 
-	private static void setTileHeight(UIsoEngine uiso_engine, Tile tile, int tile_z) {
+	public static void setTileHeight(UIsoEngine uiso_engine, Tile tile, int tile_z) {
 		if (tile_z >= 0 && tile_z <= SimulationConstants.UISO_CONFIGURATION.tile_max_z) {
 			uiso_engine.setTileZ(tile, tile_z);
 		}

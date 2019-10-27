@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -23,10 +23,9 @@ import uiso.Tile;
 import uiso.interfaces.ITileFactory;
 
 public class SimpleTileFactory implements ITileFactory {
-
+	/* Public: */
 	@Override
 	public Tile buildNewTile(int tile_x, int tile_y) {
 		return new Tile();
 	}
-
 }

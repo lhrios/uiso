@@ -1,0 +1,43 @@
+OOOOOOOOOOOOOOOOOOOOOOOOOOO+---------+----------------+---------+OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOO|         |                |         |OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOO|         |                |         |OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOO|         |       M        |         |OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOO|         G                G         |OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOO|         G                G         |OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOO|         |                |         |OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOO|         |                |         |OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOO|         |                |         |OOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOO+--------------------+---GG----+----+------+----+----GG---+-------------------+OOOOOO
+OOOOOO|                                   |      |                                  |OOOOOO
+OOOOOO|                                   |      |                                  |OOOOOO
+OOOOOO|                                   |      |                                  |OOOOOO
+OOOOOO|                                   |      |                                  |OOOOOO
+OOOOOO+------GG-------+--GG---------------+      +--------------GG--+-------GG------+OOOOOO
+OOOOOO|               |                   |      |                  |               |OOOOOO
+OOOOOO|               |                   +--GG--+                  |               |OOOOOO
+OOOOOO|               |                   |      |                  |               |OOOOOO
+OOOOOO|               |                   |      |                  |               |OOOOOO
+OOOOOO|               |                   G      G                  |               |OOOOOO
+OOOOOO|               |                   G      G                  |               |OOOOOO
+OOOOOO|               |                   |      |                  |               |OOOOOO
+OOOOOO+--------+------+---------+         |      |         +--------+-----+---------+OOOOOO
+OOOOOOOOOOOOOOO|                |         +------+         |              |OOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOO|                |         |      |         |              |OOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOO|                G         G      G         G              |OOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOO|                G         G      G         G              |OOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOO|                |         |      |         |              |OOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOO|                +---------+      +---------+              |OOOOOOOOOOOOOOOO
++--------------+                |OOOOOOOOO|      |OOOOOOOOO|              +---------------+
+|              |                |OOOOOOOOO+      +OOOOOOOOO|              |               |
+|              |                |OOOOOOOO+        +OOOOOOOO|              |               |
+|              G                |OOOOOOO+   E      +OOOOOOO|              G               |
+|              G                |OOOOOO+-----GG-----+OOOOOO|              G               |
+|              |                |OOOOOOOOOOOOOOOOOOOOOOOOOO|              |               |
+|              |                |OOOOOOOOOOOOOOOOOOOOOOOOOO|              |               |
++--------------+----------------+OOOOOOOOOOOOOOOOOOOOOOOOOO+--------------+---------------+
+OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO

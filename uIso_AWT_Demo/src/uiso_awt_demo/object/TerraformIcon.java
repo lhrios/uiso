@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -23,9 +23,10 @@ import java.util.Arrays;
 import java.util.Map;
 
 import uiso.Sprite;
+import uiso.UIsoEngine;
 
 public class TerraformIcon extends MySpriteObject<SingleTypeType> {
-
+	/* Public: */
 	public static final TerraformIcon terraform_icon = new TerraformIcon();
 
 	public static Map<Integer, Sprite> createSprites() {
@@ -34,7 +35,7 @@ public class TerraformIcon extends MySpriteObject<SingleTypeType> {
 	}
 
 	@Override
-	public void update(int tick) {
+	public void update(UIsoEngine uiso_engine, int tick) {
 	}
 
 	@Override

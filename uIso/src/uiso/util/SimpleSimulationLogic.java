@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -24,7 +24,7 @@ import uiso.UIsoEngine;
 import uiso.interfaces.ISimulationLogic;
 
 public class SimpleSimulationLogic implements ISimulationLogic {
-
+	/* Public: */
 	@Override
 	public boolean canSetTileZ(UIsoEngine uiso_engine, Tile tile, int z) {
 		return true;
@@ -37,5 +37,4 @@ public class SimpleSimulationLogic implements ISimulationLogic {
 	@Override
 	public void informTileSlopeUpdate(UIsoEngine uiso_engine, Tile tile, int old_slope) {
 	}
-
 }

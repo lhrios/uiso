@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -24,6 +24,8 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
@@ -36,25 +38,26 @@ import java.awt.image.BufferStrategy;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import uiso.Point;
 import uiso.UIsoConfiguration;
 import uiso.UIsoEngine;
-import uiso_awt_demo.MyCanvas;
 import uiso_awt_demo.drawer.CanvasBorderDrawer;
 import uiso_awt_demo.drawer.JavaSEDrawer;
+import uiso_awt_demo.gui.DebugInformationPanel;
+import uiso_awt_demo.gui.MyCanvas;
 
 public class SimulationCoordinator implements Runnable, MouseListener, MouseMotionListener, KeyListener, FocusListener {
-	public void finish() {
-		this.finished = true;
-		try {
-			if (this.t != null) {
-				this.t.join();
-			}
-		} catch (InterruptedException e) {
-		}
+	/* Public: */
+	public static class ScrollToVirtualCoordinatesEvent {
+		public Point virtualCoordinates;
 	}
 
-	/* Public: */
-	public SimulationCoordinator() {
+	public static class ScrollViewportCenterWithRealCoordinatesDeltaEvent {
+		public Point delta;
+	}
+
+	public SimulationCoordinator(boolean debug) {
+		this.debug = debug;
 		this.canvas = new MyCanvas(this);
 		this.canvas.addKeyListener(this);
 		this.canvas.addMouseListener(this);
@@ -93,10 +96,41 @@ public class SimulationCoordinator implements Runnable, MouseListener, MouseMoti
 				g2.dispose();
 			} while (this.strategy.contentsRestored());
 
+			this.strategy.show();
+
 		} while (this.strategy.contentsLost());
 
-		this.strategy.show();
 		Toolkit.getDefaultToolkit().sync();
+
+		this.getDebugInformationPanel().addActionListenerToBtnScrollToVirtualCoordinates(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent unused) {
+				try {
+					ScrollToVirtualCoordinatesEvent event = new ScrollToVirtualCoordinatesEvent();
+					event.virtualCoordinates = new Point();
+					event.virtualCoordinates.x = SimulationCoordinator.this.getDebugInformationPanel().getTxtScrollToVirtualCoordinatesX();
+					event.virtualCoordinates.y = SimulationCoordinator.this.getDebugInformationPanel().getTxtScrollToVirtualCoordinatesY();
+					SimulationCoordinator.this.scroll_to_event_queue.add(event);
+
+				} catch (NumberFormatException exception) {
+				}
+			}
+		});
+
+		this.getDebugInformationPanel().addActionListenerToBtnScrollViewportCenterWithRealCoordinatesDelta(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent unused) {
+				try {
+					ScrollViewportCenterWithRealCoordinatesDeltaEvent event = new ScrollViewportCenterWithRealCoordinatesDeltaEvent();
+					event.delta = new Point();
+					event.delta.x = SimulationCoordinator.this.getDebugInformationPanel().getTxtScrollViewportCenterWithRealCoordinatesDeltaX();
+					event.delta.y = SimulationCoordinator.this.getDebugInformationPanel().getTxtScrollViewportCenterWithRealCoordinatesDeltaY();
+					SimulationCoordinator.this.scroll_to_event_queue.add(event);
+
+				} catch (NumberFormatException exception) {
+				}
+			}
+		});
 
 		this.t = new Thread(this);
 		this.t.start();
@@ -104,6 +138,16 @@ public class SimulationCoordinator implements Runnable, MouseListener, MouseMoti
 
 	public void requestFocusOnCanvas() {
 		this.canvas.requestFocus();
+	}
+
+	public void finish() {
+		this.finished = true;
+		try {
+			if (this.t != null) {
+				this.t.join();
+			}
+		} catch (InterruptedException e) {
+		}
 	}
 
 	@Override
@@ -120,6 +164,7 @@ public class SimulationCoordinator implements Runnable, MouseListener, MouseMoti
 				this.uiso_engine_viewport_h = configuration.viewport_h = this.canvas_h - 2 * SimulationConstants.UISO_ENGINE_VIEWPORT_DELTA_H;
 				configuration.drawer = this.drawer = new JavaSEDrawer(this.uiso_engine_viewport_w, this.uiso_engine_viewport_h);
 				configuration.simulation_logic = this.simulation_logic = new SimulationLogic();
+				configuration.debug = this.debug;
 
 				Graphics2D g2 = this.createGraphics2D();
 				this.drawer.setGraphics2D(g2);
@@ -136,7 +181,8 @@ public class SimulationCoordinator implements Runnable, MouseListener, MouseMoti
 				frame_time_before = System.nanoTime();
 
 				if (!this.paused) {
-					this.simulation_logic.updateState(this.uiso_engine, this.drawer, this.key_event_queue, this.mouse_event_queue, this.focus_event_queue);
+					this.simulation_logic.updateState(this.uiso_engine, this.drawer, this.key_event_queue, this.mouse_event_queue, this.focus_event_queue,
+							this.scroll_to_event_queue);
 				}
 
 				do {
@@ -169,9 +215,12 @@ public class SimulationCoordinator implements Runnable, MouseListener, MouseMoti
 
 					} while (this.strategy.contentsRestored());
 
+					this.strategy.show();
+
 				} while (this.strategy.contentsLost());
 
-				this.strategy.show();
+				this.simulation_logic.updateDebugInformationPanel(this.uiso_engine, this.debugInformationPanel);
+
 				Toolkit.getDefaultToolkit().sync();
 
 				frame_count++;
@@ -249,17 +298,24 @@ public class SimulationCoordinator implements Runnable, MouseListener, MouseMoti
 		this.processFocusEvent(e);
 	}
 
+	public DebugInformationPanel getDebugInformationPanel() {
+		return this.debugInformationPanel;
+	}
+
 	public Component getCanvas() {
 		return this.canvas;
 	}
 
 	/* Private: */
+	private final boolean debug;
+
 	private volatile boolean finished = false, paused = false;
 	private int uiso_engine_viewport_w, uiso_engine_viewport_h, canvas_w, canvas_h;
 	private BufferStrategy strategy;
 	private JavaSEDrawer drawer;
 	private UIsoEngine uiso_engine;
 	private MyCanvas canvas;
+	private DebugInformationPanel debugInformationPanel = new DebugInformationPanel();
 	private Thread t;
 	private SimulationLogic simulation_logic;
 	private CanvasBorderDrawer canvas_border_drawer;
@@ -267,6 +323,7 @@ public class SimulationCoordinator implements Runnable, MouseListener, MouseMoti
 	private Queue<MouseEvent> mouse_event_queue = new ConcurrentLinkedQueue<MouseEvent>();
 	private Queue<KeyEvent> key_event_queue = new ConcurrentLinkedQueue<KeyEvent>();
 	private Queue<FocusEvent> focus_event_queue = new ConcurrentLinkedQueue<FocusEvent>();
+	private Queue<Object> scroll_to_event_queue = new ConcurrentLinkedQueue<Object>();
 
 	private void processMouseEvent(MouseEvent e) {
 		e.translatePoint(-SimulationConstants.UISO_ENGINE_VIEWPORT_DELTA_W, -SimulationConstants.UISO_ENGINE_VIEWPORT_DELTA_H);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -19,6 +19,7 @@
 
 package uiso_awt_demo.simulation;
 
+import java.awt.EventQueue;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -28,12 +29,18 @@ import uiso.Point;
 import uiso.Tile;
 import uiso.UIsoConstants;
 import uiso.UIsoEngine;
+import uiso.UIsoObject;
 import uiso.interfaces.ISimulationLogic;
+import uiso.interfaces.IUIsoObjectComparator;
 import uiso_awt_demo.drawer.JavaSEDrawer;
+import uiso_awt_demo.gui.DebugInformationPanel;
 import uiso_awt_demo.map.MyTile;
+import uiso_awt_demo.object.Minotaur;
 import uiso_awt_demo.object.MySpriteObject;
 import uiso_awt_demo.object.PathFinder;
 import uiso_awt_demo.object.TerraformIcon;
+import uiso_awt_demo.simulation.SimulationCoordinator.ScrollToVirtualCoordinatesEvent;
+import uiso_awt_demo.simulation.SimulationCoordinator.ScrollViewportCenterWithRealCoordinatesDeltaEvent;
 import uiso_awt_demo.util.TerraformUtils;
 
 class SimulationLogic implements ISimulationLogic {
@@ -41,19 +48,23 @@ class SimulationLogic implements ISimulationLogic {
 	public void init(UIsoEngine uiso_engine) {
 		MySpriteObject.init();
 		this.simulation_state = new SimulationState(uiso_engine);
+		this.tile_under_mouse_pointer = uiso_engine.getTile(0, 0);
 	}
 
 	public boolean updateState(UIsoEngine uiso_engine, JavaSEDrawer drawer, Queue<KeyEvent> key_event_queue, Queue<MouseEvent> mouse_event_queue,
-			Queue<FocusEvent> focus_event_queue) {
+			Queue<FocusEvent> focus_event_queue, Queue<Object> scroll_to_event_queue) {
 		this.processKeyEvents(key_event_queue);
 		this.processMouseEvents(uiso_engine, drawer, mouse_event_queue);
 		this.processFocusEvents(focus_event_queue);
+		this.processScrollToEvents(uiso_engine, scroll_to_event_queue);
 
 		this.doScroll(uiso_engine, drawer);
 
-		this.simulation_state.minotaur.update(this.simulation_state.tick);
 		this.simulation_state.tick++;
-		uiso_engine.informObjectMotion(this.simulation_state.minotaur);
+
+		this.simulation_state.minotaur.update(uiso_engine, this.simulation_state.tick);
+
+		this.simulation_state.castle_entrance.update(uiso_engine, this.simulation_state.tick);
 
 		return false;
 	}
@@ -71,9 +82,65 @@ class SimulationLogic implements ISimulationLogic {
 	public void informTileSlopeUpdate(UIsoEngine uiso_engine, Tile tile, int old_slope) {
 	}
 
+	public void updateDebugInformationPanel(UIsoEngine uIsoEngine, final DebugInformationPanel debugInformationPanel) {
+		final Point fine_coordinates = new Point();
+		fine_coordinates.copyFrom(SimulationLogic.this.fine_coordinates);
+
+		final int heightFromGetRelativeHeightOfPointInSlopeSurface =
+				uIsoEngine.getRelativeHeightOfPointInSlopeSurface(this.tile_under_mouse_pointer.getSlope(), fine_coordinates.x, fine_coordinates.y);
+		final int heightFromGetAbsoluteHeightOfPointInTileSlopeSurface =
+				uIsoEngine.getAbsoluteHeightOfPointInTileSlopeSurface(this.tile_under_mouse_pointer, fine_coordinates.x, fine_coordinates.y);
+
+		final Point tileUnderMousePointerCoordinates = new Point();
+		tileUnderMousePointerCoordinates.x = uIsoEngine.getTileX(this.tile_under_mouse_pointer);
+		tileUnderMousePointerCoordinates.y = uIsoEngine.getTileY(this.tile_under_mouse_pointer);
+		tileUnderMousePointerCoordinates.z = uIsoEngine.getTileZ(this.tile_under_mouse_pointer);
+
+		final Point tileUnderMinoutar = new Point();
+		tileUnderMinoutar.x = uIsoEngine.getTileX(this.simulation_state.minotaur);
+		tileUnderMinoutar.y = uIsoEngine.getTileY(this.simulation_state.minotaur);
+
+		final Point virtualViewportCenterCoordinates = new Point();
+		uIsoEngine.getVirtualViewportCenterCoordinates(virtualViewportCenterCoordinates);
+
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				debugInformationPanel.update(tileUnderMousePointerCoordinates, fine_coordinates, heightFromGetRelativeHeightOfPointInSlopeSurface,
+						heightFromGetAbsoluteHeightOfPointInTileSlopeSurface, tileUnderMinoutar, virtualViewportCenterCoordinates);
+			}
+		});
+	}
+
+	/* Default: */
+	static class MySpriteObjectComparator implements IUIsoObjectComparator {
+		@Override
+		public boolean doesBMustBeDrawnBeforeA(UIsoEngine uiso_engine, UIsoObject a, UIsoObject b) {
+			int a_tile_x = uiso_engine.getTileX(a);
+			int b_tile_x = uiso_engine.getTileX(b);
+			int a_tile_y = uiso_engine.getTileY(a);
+			int b_tile_y = uiso_engine.getTileY(b);
+
+			if (a_tile_x == b_tile_x) {
+				if (a_tile_y == b_tile_y) {
+					return b instanceof Minotaur;
+				}
+				return a_tile_y > b_tile_y;
+			}
+			return a_tile_x > b_tile_x;
+		}
+	};
+
+	static class MyStringObjectComparator implements IUIsoObjectComparator {
+		@Override
+		public boolean doesBMustBeDrawnBeforeA(UIsoEngine uiso_engine, UIsoObject a, UIsoObject b) {
+			return true;
+		}
+	};
+
 	/* Private: */
 	private Point viewport_move_delta = new Point(), mouse_event = new Point(), fine_coordinates = new Point();
-	private Tile tile_under_mouse_pointer;
+	private Tile tile_under_mouse_pointer, tile_under_terraform_icon;
 	private SimulationState simulation_state;
 
 	private void doScroll(UIsoEngine uiso_engine, JavaSEDrawer drawer) {
@@ -81,6 +148,21 @@ class SimulationLogic implements ISimulationLogic {
 			uiso_engine.scrollViewportCenterWithRealCoordinatesDelta(this.viewport_move_delta);
 			this.updateTileUnderMousePointer(uiso_engine, drawer);
 			this.updateTerraformIcon(uiso_engine, drawer);
+		}
+	}
+
+	private void processScrollToEvents(UIsoEngine uiso_engine, Queue<Object> scroll_to_event_queue) {
+		while (!scroll_to_event_queue.isEmpty()) {
+			Object object = scroll_to_event_queue.poll();
+
+			if (object instanceof ScrollToVirtualCoordinatesEvent) {
+				ScrollToVirtualCoordinatesEvent event = (ScrollToVirtualCoordinatesEvent) object;
+				uiso_engine.scrollToVirtualCoordinates(event.virtualCoordinates);
+
+			} else if (object instanceof ScrollViewportCenterWithRealCoordinatesDeltaEvent) {
+				ScrollViewportCenterWithRealCoordinatesDeltaEvent event = (ScrollViewportCenterWithRealCoordinatesDeltaEvent) object;
+				uiso_engine.scrollViewportCenterWithVirtualCoordinatesDelta(event.delta);
+			}
 		}
 	}
 
@@ -119,6 +201,7 @@ class SimulationLogic implements ISimulationLogic {
 
 	private void processMouseEvents(UIsoEngine uiso_engine, JavaSEDrawer drawer, Queue<MouseEvent> mouse_event_queue) {
 		while (!mouse_event_queue.isEmpty()) {
+
 			MouseEvent e = mouse_event_queue.poll();
 
 			switch (e.getID()) {
@@ -144,9 +227,9 @@ class SimulationLogic implements ISimulationLogic {
 
 					if (SimulationConstants.EDITABLE_AREA.contains(tile_x, tile_y)) {
 						int delta = left_click ? -1 : 1;
-						TerraformUtils.addToTileCornersZ(delta, uiso_engine, (MyTile) this.tile_under_mouse_pointer);
-
+						TerraformUtils.setTileHeight(uiso_engine, this.tile_under_terraform_icon, uiso_engine.getTileZ(this.tile_under_terraform_icon) + delta);
 						this.updateTerraformIconPosition(uiso_engine, drawer);
+
 					} else if (SimulationConstants.CASTLE_LAND_AREA.contains(tile_x, tile_y)) {
 						if (this.tile_under_mouse_pointer.getSlope() == Tile.FLAT && uiso_engine.getTileZ(this.tile_under_mouse_pointer) == 0
 								&& (this.simulation_state.minotaur.getTileX() != tile_x || this.simulation_state.minotaur.getTileY() != tile_y)) {
@@ -161,15 +244,24 @@ class SimulationLogic implements ISimulationLogic {
 	}
 
 	private void updateTerraformIconPosition(UIsoEngine uiso_engine, JavaSEDrawer drawer) {
-		TerraformIcon.terraform_icon.setX(uiso_engine.getTileX(this.tile_under_mouse_pointer) * SimulationConstants.TILE_VIRTUAL_SIZE
-				+ SimulationConstants.TILE_VIRTUAL_SIZE / 2);
-		TerraformIcon.terraform_icon.setY(uiso_engine.getTileY(this.tile_under_mouse_pointer) * SimulationConstants.TILE_VIRTUAL_SIZE
-				+ SimulationConstants.TILE_VIRTUAL_SIZE / 2);
-		TerraformIcon.terraform_icon.setZ((uiso_engine.getTileZ(this.tile_under_mouse_pointer) + Tile.min_z_difference_relative_to_tile_z[this.tile_under_mouse_pointer
-				.getSlopeIndex()])
-				* SimulationConstants.TILE_VIRTUAL_SIZE
-				+ uiso_engine.getRelativeHeightOfPointInSlopeSurface(this.tile_under_mouse_pointer.getSlope(), SimulationConstants.TILE_VIRTUAL_SIZE / 2,
-						SimulationConstants.TILE_VIRTUAL_SIZE / 2));
+		int delta_x = 0, delta_y = 0;
+
+		if (this.fine_coordinates.x >= SimulationConstants.TILE_VIRTUAL_SIZE / 2) {
+			delta_x = 1;
+		}
+		if (this.fine_coordinates.y >= SimulationConstants.TILE_VIRTUAL_SIZE / 2) {
+			delta_y = 1;
+		}
+
+		this.tile_under_terraform_icon =
+				uiso_engine.getTile(uiso_engine.getTileX(this.tile_under_mouse_pointer) + delta_x, uiso_engine.getTileY(this.tile_under_mouse_pointer) + delta_y);
+		int x = uiso_engine.getTileX(this.tile_under_terraform_icon) * SimulationConstants.TILE_VIRTUAL_SIZE;
+		int y = uiso_engine.getTileY(this.tile_under_terraform_icon) * SimulationConstants.TILE_VIRTUAL_SIZE;
+		int z = uiso_engine.getTileZ(this.tile_under_terraform_icon) * SimulationConstants.SLOPE_HEIGHT;
+
+		TerraformIcon.terraform_icon.setX(x);
+		TerraformIcon.terraform_icon.setY(y);
+		TerraformIcon.terraform_icon.setZ(z);
 
 		uiso_engine.informObjectMotion(TerraformIcon.terraform_icon);
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -25,6 +25,5 @@ abstract class SceneObject {
 		this.real_coordinates = new Point();
 	}
 
-	int max_x, max_y, max_z, min_x, min_y, min_z;
 	Point real_coordinates;
 }

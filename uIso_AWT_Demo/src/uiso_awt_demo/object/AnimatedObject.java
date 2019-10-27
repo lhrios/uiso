@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -17,35 +17,11 @@
  * along with uIsometric Engine.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uiso_awt_demo;
+package uiso_awt_demo.object;
 
-import java.awt.Canvas;
-import java.awt.EventQueue;
+import uiso.UIsoEngine;
 
-import uiso_awt_demo.simulation.SimulationCoordinator;
-
-public class MyCanvas extends Canvas {
+interface AnimatedObject {
 	/* Public: */
-	public MyCanvas(SimulationCoordinator simulation_coordinator) {
-		this.simulation_coordinator = simulation_coordinator;
-		this.setIgnoreRepaint(true);
-	}
-
-	@Override
-	public void addNotify() {
-		super.addNotify();
-
-		EventQueue.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				MyCanvas.this.simulation_coordinator.init();
-			}
-		});
-	}
-
-	/* Private: */
-	private static final long serialVersionUID = -1785897683046485515L;
-
-	private SimulationCoordinator simulation_coordinator;
+	public void update(UIsoEngine uiso_engine, int tick);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2015 Luis Henrique O. Rios
+ * Copyright 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -17,27 +17,12 @@
  * along with uIsometric Engine.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uiso_awt_demo.map;
+package uiso_awt_demo.gui;
 
-import uiso.Tile;
-import uiso.interfaces.ITileFactory;
-import uiso_awt_demo.simulation.SimulationConstants;
+import java.awt.Insets;
 
-public class MyTileFactory implements ITileFactory {
+public class GUIConstants {
 	/* Public: */
-
-	@Override
-	public Tile buildNewTile(int tile_x, int tile_y) {
-		MyTile tile = new MyTile();
-
-		if (SimulationConstants.CASTLE_LAND_AREA.contains(tile_x, tile_y)) {
-			tile.setTileType(TileType.GRASS);
-		} else if (SimulationConstants.EDITABLE_AREA.contains(tile_x, tile_y)) {
-			tile.setTileType(TileType.BARE_GROUND);
-		} else if (SimulationConstants.EMPTY_AREA.contains(tile_x, tile_y)) {
-			tile.setVisibility(false);
-		}
-
-		return tile;
-	}
+	public static final Insets DEFAULT_INSETS = new Insets(1, 1, 1, 1);
+	public static final String WINDOW_TITLE = "uIso Demonstration";
 }

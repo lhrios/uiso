@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -26,7 +26,7 @@ import uiso.Sprite;
 import uiso.UIsoImage;
 
 public class SimpleSpriteLoader {
-
+	/* Public: */
 	public SimpleSpriteLoader(IImageManipulator image_manipulator) {
 		this.image_manipulator = image_manipulator;
 	}

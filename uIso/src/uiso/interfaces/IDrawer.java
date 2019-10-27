@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -19,7 +19,7 @@
 
 package uiso.interfaces;
 
-import uiso.Point;
+import uiso.Rectangle;
 import uiso.Sprite;
 import uiso.SpriteObject;
 import uiso.Tile;
@@ -28,7 +28,9 @@ import uiso.UIsoEngine;
 import uiso.UIsoImage;
 
 /**
- * Interface with the methods employed by the engine to draw a scene. It is not allowed to change the engine state while inside these methods.
+ * Interface with the methods employed by the engine to draw a scene. It is not allowed to change the engine state while inside these methods. Also, it is not allowed to
+ * return different values on methods {@link #getObjectSprite(SpriteObject, Sprite[])} and {@link #getTileSprite(Tile, Sprite[])} while the method
+ * {@link UIsoEngine#draw()} is being executed.
  * 
  * @author luis
  */
@@ -122,11 +124,11 @@ public interface IDrawer {
 	 * @param s
 	 *           the {@link String} for which the bounds will be calculated
 	 * @param bounds
-	 *           the {@link Point} where the bounds will be stored
+	 *           the {@link Rectangle} where the bounds will be stored
 	 * @param font
 	 *           the font that will be used to draw {@code s}. It will be null in the case of debugging information.
 	 */
-	public void getStringBounds(String s, Point bounds, Object font);
+	public void getStringBounds(String s, Rectangle bounds, Object font);
 
 	/**
 	 * The last method called during a scene drawing.
@@ -145,8 +147,9 @@ public interface IDrawer {
 	 */
 	public void getTileSprite(Tile tile, Sprite[] sprites);
 
+	/* TODO: Right now, it considers only the first position. */
 	/**
-	 * Returns the sprite associated with the object informed. Right now, it considers only the first position.
+	 * Returns the sprite associated with the object informed.
 	 * 
 	 * @param object
 	 *           the object for which a sprite will be returned

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -19,6 +19,10 @@
 
 package uiso_awt_demo.image;
 
+import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
+import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -29,16 +33,27 @@ import uiso.UIsoImage;
 public class JavaSEImage extends UIsoImage {
 	/* Public: */
 	public static JavaSEImage loadJavaSEImage(String path) {
-		JavaSEImage image = new JavaSEImage();
+		JavaSEImage javaSEImage = new JavaSEImage();
 
 		try {
-			image.image = ImageIO.read(image.getClass().getClassLoader().getResource(path));
+			BufferedImage image = ImageIO.read(javaSEImage.getClass().getClassLoader().getResource(path));
+
+			GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			GraphicsConfiguration graphicsConfiguration = graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration();
+			BufferedImage bufferedImage = graphicsConfiguration.createCompatibleImage(image.getWidth(null), image.getHeight(null), Transparency.BITMASK);
+			bufferedImage.setAccelerationPriority(1);
+			Graphics g = bufferedImage.getGraphics();
+			g.drawImage(image, 0, 0, null);
+			g.dispose();
+
+			javaSEImage.image = bufferedImage;
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
 
-		return image;
+		return javaSEImage;
 	}
 
 	public JavaSEImage(BufferedImage image) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -64,10 +64,7 @@ public class PathFinder {
 			List<Point> path = new ArrayList<Point>();
 			while (n != null) {
 				assert (n.tile.isPassable());
-				//@formatter:off
-				path.add(new Point(uiso_engine.getTileX(n.tile) * SimulationConstants.TILE_VIRTUAL_SIZE + SimulationConstants.TILE_VIRTUAL_SIZE / 2, 
-						uiso_engine.getTileY(n.tile) * SimulationConstants.TILE_VIRTUAL_SIZE + SimulationConstants.TILE_VIRTUAL_SIZE / 2));
-				//@formatter:on
+				path.add(new Point(uiso_engine.getTileX(n.tile) * SimulationConstants.TILE_VIRTUAL_SIZE, uiso_engine.getTileY(n.tile) * SimulationConstants.TILE_VIRTUAL_SIZE));
 				n = n.parent;
 			}
 

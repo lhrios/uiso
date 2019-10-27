@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -105,11 +105,17 @@ public class CastleBuilder {
 		switch (c) {
 			case 'G':
 				if (this.safeGetChar(x + 1, y) != ' ' && this.safeGetChar(x - 1, y) != ' ') {
-					this.createWall(x, y, WallType.X_GATE_BEFORE, uiso_engine);
-					this.createWall(x, y, WallType.X_GATE_AFTER, uiso_engine);
+					if (this.safeGetChar(x + 1, y) == 'G') {
+						this.createWall(x, y, WallType.X_GATE_AFTER, uiso_engine);
+					} else {
+						this.createWall(x, y, WallType.X_GATE_BEFORE, uiso_engine);
+					}
 				} else {
-					this.createWall(x, y, WallType.Y_GATE_BEFORE, uiso_engine);
-					this.createWall(x, y, WallType.Y_GATE_AFTER, uiso_engine);
+					if (this.safeGetChar(x, y + 1) == 'G') {
+						this.createWall(x, y, WallType.Y_GATE_AFTER, uiso_engine);
+					} else {
+						this.createWall(x, y, WallType.Y_GATE_BEFORE, uiso_engine);
+					}
 				}
 			break;
 			case '+':

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -22,6 +22,7 @@ package uiso;
 import uiso.exceptions.InvalidTileCoordinatesException;
 import uiso.interfaces.IDrawer;
 import uiso.interfaces.ISimulationLogic;
+import uiso.util.MathUtils;
 
 /**
  * This is the main uIsometric Engine class. It is used to:
@@ -110,9 +111,10 @@ public class UIsoEngine {
 		this.tile_h = configuration.tile_h;
 		this.tile_w = configuration.tile_w;
 		this.tile_max_z = configuration.tile_max_z;
+		this.slope_height = configuration.slope_height;
 		this.virtual_world_tile_size = (configuration.tile_w >> 2);
 		this.map = new UIsoMap(this.w = configuration.w, this.h = configuration.h, this.tile_max_z, configuration.tile_factory);
-		this.maping_helper = new MapingHelper(this.tile_w, this.tile_h, this.virtual_world_tile_size);
+		this.maping_helper = new MapingHelper(this.tile_w, this.tile_h, this.virtual_world_tile_size, this.slope_height);
 		this.real_w = this.w + (this.tile_max_z << 1) - 1;
 		this.real_h = this.h + (this.tile_max_z << 1) - 1;
 
@@ -130,7 +132,7 @@ public class UIsoEngine {
 		this.point = new Point();
 		this.viewport_point = new Point();
 		this.viewport_center = new Point();
-		this.string_bounds = new Point();
+		this.string_bounds = new Rectangle();
 		this.sprites = new Sprite[configuration.max_sprites_per_tile + 1];
 
 		this.viewport_center.x = this.tile_max_z * this.virtual_world_tile_size;
@@ -141,7 +143,9 @@ public class UIsoEngine {
 
 		this.objects_grid_manager = new ObjectsGridManager(this);
 
-		this.scene_objects_manager = new SceneObjectsManager(this, configuration.max_objects_in_the_scene, configuration.max_string_objects_in_the_scene);
+		this.scene_objects_manager =
+				new SceneObjectsManager(this, configuration.max_objects_in_the_scene, configuration.max_string_objects_in_the_scene, configuration.sprite_object_comparator,
+						configuration.string_object_comparator);
 
 		/* Dirty rectangle system. */
 		// this.scene_rectangle_manager = new SceneRectangleManager(configuration);
@@ -161,7 +165,13 @@ public class UIsoEngine {
 	}
 
 	/**
-	 * Causes the engine to draw the current scene based on its current state.
+	 * Causes the engine to draw the current scene based on its current state. Three layers will be drawn (in this order):
+	 * <ul>
+	 * <li>{@link Tile}'s layer.</li>
+	 * <li>{@link SpriteObject}'s layer.</li>
+	 * <li>{@link StringObject}'s layer.</li>
+	 * </ul>
+	 * 
 	 */
 	public void draw() {
 		int min_x, min_y, max_x, max_y;
@@ -282,58 +292,74 @@ public class UIsoEngine {
 	}
 
 	public final int getAbsoluteHeightOfPointInTileSlopeSurface(Tile tile, int x, int y) {
-		return this.getRelativeHeightOfPointInSlopeSurface(tile.getSlope(), x, y) + this.getTileMinZ(tile) * this.virtual_world_tile_size;
+		return this.getRelativeHeightOfPointInSlopeSurface(tile.getSlope(), x, y) + this.getTileMinZ(tile) * this.slope_height;
 	}
 
+	/**
+	 * Gets the virtual height (z-coordinate) of a point in the slope surface. The returned value is relative to minimum slope height.
+	 * 
+	 * @param slope
+	 *           one of the possible slopes
+	 * @param x
+	 *           the virtual x-coordinate relative to slope origin
+	 * @param y
+	 *           the virtual y-coordinate relative to slope origin
+	 * @return the height of the point informed relative to minimum slope height
+	 * @throws IllegalArgumentException
+	 *            if the point informed (using relative coordinates) is not inside slope/tile boundaries
+	 */
 	public final int getRelativeHeightOfPointInSlopeSurface(int slope, int x, int y) throws IllegalArgumentException {
 		if (x < 0 || x >= this.virtual_world_tile_size || y < 0 || y >= this.virtual_world_tile_size)
 			throw new IllegalArgumentException("The point [" + x + "," + y + "] is not inside tile.");
+		float h = this.slope_height;
+		float l = this.virtual_world_tile_size;
+		float a = l / h;
 		switch (slope) {
 			case Tile.FLAT:
-				/* z = 0 */
 				return 0;
+
 			case Tile.NE:
-				/* z = v - x */
-				return this.virtual_world_tile_size - x;
+				return MathUtils.round(h - x / a);
+
 			case Tile.SW:
-				/* z = x */
-				return x;
+				return MathUtils.round(x / a);
+
 			case Tile.ES:
-				/* z = y */
-				return y;
+				return MathUtils.round(y / a);
+
 			case Tile.WN:
-				/* z = v - y */
-				return this.virtual_world_tile_size - y;
+				return MathUtils.round(h - y / a);
+
 			case Tile.N:
-				/* z = v - x - y */
-				return x + y >= this.virtual_world_tile_size ? 0 : this.virtual_world_tile_size - (x + y);
+				return MathUtils.round(x + y >= l ? 0 : (l * h - x * h - h * y) / l);
+
 			case Tile.S:
-				/* z = -v + x + y */
-				return x + y <= this.virtual_world_tile_size ? 0 : -(this.virtual_world_tile_size - x - y);
+				return MathUtils.round(x + y <= l ? 0 : (l * h - x * h - h * y) / -l);
+
 			case Tile.W:
-				/* z = x - y */
-				return x - y <= 0 ? 0 : x - y;
+				return MathUtils.round(x - y < 0 ? 0 : (h * x - h * y) / l);
+
 			case Tile.E:
-				/* z = y - x */
-				return x - y > 0 ? 0 : y - x;
+				return MathUtils.round(x - y > 0 ? 0 : (h * x - h * y) / -l);
+
 			case Tile.WE:
-				/* z = v * 2 - x - y and z = x + y */
-				return x + y >= this.virtual_world_tile_size ? (this.virtual_world_tile_size << 1) - (x + y) : x + y;
+				return MathUtils.round(x + y >= l ? (h * x + h * y - 2 * h * l) / -l : (h * x + h * y) / l);
+
 			case Tile.NS:
-				/* z = v + y - x and z = v - y + x */
-				return x - y > 0 ? this.virtual_world_tile_size + y - x : this.virtual_world_tile_size - y + x;
+				return MathUtils.round(x - y < 0 ? (l * h - h * y + h * x) / l : (l * h - h * x + h * y) / l);
+
 			case Tile.NES:
-				/* v and z = v - y - x */
-				return x - y <= 0 ? this.virtual_world_tile_size : this.virtual_world_tile_size + y - x;
+				return MathUtils.round(x - y <= 0 ? h : (l * h - h * x + h * y) / l);
+
 			case Tile.SWN:
-				/* v and z = v - y + x */
-				return x - y >= 0 ? this.virtual_world_tile_size : this.virtual_world_tile_size - y + x;
+				return MathUtils.round(x - y >= 0 ? h : (l * h - h * y + h * x) / l);
+
 			case Tile.ESW:
-				/* v and z = v + x + y */
-				return x + y >= this.virtual_world_tile_size ? this.virtual_world_tile_size : x + y;
+				return MathUtils.round(x + y <= l ? (h * x + h * y) / l : h);
+
 			case Tile.WNE:
-				/* v and z = 2 * v - x - y */
-				return x + y <= this.virtual_world_tile_size ? this.virtual_world_tile_size : (this.virtual_world_tile_size << 1) - x - y;
+				return MathUtils.round(x + y <= l ? h : (h * x + h * y - 2 * h * l) / -l);
+
 			default:
 				assert (false);
 		}
@@ -383,6 +409,24 @@ public class UIsoEngine {
 		return this.map.tiles[y + this.tile_max_z][x + this.tile_max_z];
 	}
 
+	public int getTileX(UIsoObject o) {
+		int x = o.getX();
+		if (x >= 0) {
+			return x / this.virtual_world_tile_size;
+		} else {
+			return (x / this.virtual_world_tile_size) - 1;
+		}
+	}
+
+	public int getTileY(UIsoObject o) {
+		int y = o.getY();
+		if (y >= 0) {
+			return y / this.virtual_world_tile_size;
+		} else {
+			return (y / this.virtual_world_tile_size) - 1;
+		}
+	}
+
 	public int getTileX(Tile tile) {
 		return tile.getX() - this.tile_max_z;
 	}
@@ -403,10 +447,17 @@ public class UIsoEngine {
 		this.real_coordinates.x = this.viewport_offset_x + this.viewport_w_half;
 		this.real_coordinates.y = this.viewport_offset_y + this.viewport_h_half;
 		toVirtualCoordinates(p, this.real_coordinates);
+		p.x -= this.tile_max_z * this.virtual_world_tile_size;
+		p.y -= this.tile_max_z * this.virtual_world_tile_size;
 	}
 
 	public void insertObject(UIsoObject object) {
 		this.informObjectMotion(object);
+	}
+
+	public void informObjectSizeChange(UIsoObject object) {
+		this.removeObject(object);
+		this.insertObject(object);
 	}
 
 	public void informObjectMotion(UIsoObject object) {
@@ -439,12 +490,12 @@ public class UIsoEngine {
 			StringObject string_object = (StringObject) object;
 			this.drawer.getStringBounds(string_object.getString(), this.string_bounds, string_object.getFont());
 			if (this.debug)
-				this.objects_grid_manager.checkObjectLimits(this.string_bounds.x, this.string_bounds.y);
+				this.objects_grid_manager.checkObjectLimits(this.string_bounds.w, this.string_bounds.h);
 
-			ws_x = nw_x = this.real_coordinates.x - (this.string_bounds.x >> 1);
-			ne_y = nw_y = this.real_coordinates.y - (this.string_bounds.y >> 1);
-			ne_x = es_x = nw_x + this.string_bounds.x;
-			ws_y = es_y = nw_y + this.string_bounds.y;
+			ws_x = nw_x = this.real_coordinates.x - (this.string_bounds.w >> 1);
+			ne_y = nw_y = this.real_coordinates.y - (this.string_bounds.h >> 1);
+			ne_x = es_x = nw_x + this.string_bounds.w;
+			ws_y = es_y = nw_y + this.string_bounds.h;
 		}
 
 		nw_cell = this.objects_grid_manager.getObjectsGridCellAndCellCoordinates(nw_x, nw_y, null);
@@ -542,7 +593,7 @@ public class UIsoEngine {
 		assert this.objects_grid_manager.isViewportPositionValid(this.viewport_offset_x, this.viewport_offset_y);
 	}
 
-	public void scrollToVirtualCoordinate(Point coordinates) {
+	public void scrollToVirtualCoordinates(Point coordinates) {
 		this.internalScrollToCoordinate(coordinates, true);
 	}
 
@@ -594,11 +645,12 @@ public class UIsoEngine {
 	/* Package: */
 	boolean debug;
 	IDrawer drawer;
-	Point string_bounds, real_coordinates, virtual_coordinates; /* Employed for various mappings. */
+	Rectangle string_bounds;
+	Point real_coordinates, virtual_coordinates; /* Employed for various mappings. */
 	Sprite[] sprites;
 	int real_w, real_h; /* They are 1-based indices. */
 	int viewport_offset_x, viewport_offset_y; /* Real coordinates of upper left corner. It always reflects the same information of viewport_center. */
-	int virtual_world_tile_size, tile_h, tile_w, w, h, tile_max_z, n_affected_tiles, viewport_w_half, viewport_h_half, viewport_w, viewport_h;
+	int virtual_world_tile_size, slope_height, tile_h, tile_w, w, h, tile_max_z, n_affected_tiles, viewport_w_half, viewport_h_half, viewport_w, viewport_h;
 
 	final static void toRealCoordinates(Point virtual_coordinates, Point real_coordinates) {
 		assert (virtual_coordinates.z >= 0);
@@ -695,7 +747,7 @@ public class UIsoEngine {
 
 			this.virtual_coordinates.x = (tile.getX() * this.virtual_world_tile_size);
 			this.virtual_coordinates.y = (tile.getY() * this.virtual_world_tile_size);
-			this.virtual_coordinates.z = (tile.getZ() * this.virtual_world_tile_size);
+			this.virtual_coordinates.z = (tile.getZ() * this.slope_height);
 
 			toRealCoordinates(this.virtual_coordinates, this.real_coordinates);
 			this.real_coordinates.x += (-sprite.getAnchorX() - this.viewport_offset_x);
@@ -855,9 +907,9 @@ public class UIsoEngine {
 			min_z = n_z + Tile.min_z_difference_relative_to_tile_z[slope_index];
 
 			/* As it is shifted to simulate the height. */
-			this.point.y += (min_z * this.virtual_world_tile_size);
+			this.point.y += (min_z * this.slope_height);
 			position = this.maping_helper.getPositionRelativeToSlopePolygon(this.point, slope_index);
-			this.point.y -= (min_z * this.virtual_world_tile_size);
+			this.point.y -= (min_z * this.slope_height);
 
 			switch (position) {
 				case UIsoConstants.ABOVE_NE_LINE:
@@ -905,180 +957,155 @@ public class UIsoEngine {
 		if (fine_coordinates != null && this.tile_position_relative_map_polygon == UIsoConstants.INSIDE_POLYGON) {
 			Tile tile = this.map.tiles[tile_y][tile_x];
 			int r_x = this.point.x - (this.tile_w >> 1);
-			int r_y = this.point.y + (min_z + Tile.corner_n_z_relative_to_min_z[slope_index]) * this.virtual_world_tile_size;
-			int v_x = 0, v_y = 0, v_z = 0;
+			int r_y = this.point.y + (min_z + Tile.corner_n_z_relative_to_min_z[slope_index]) * this.slope_height;
+			float f_v_x = 0, f_v_y = 0, f_v_z = 0;
+			float h = this.slope_height;
+			float l = this.virtual_world_tile_size;
+			float a = l / h;
 
 			switch (tile.getSlope()) {
 				case Tile.FLAT:
-					v_x = (-r_x + (r_y << 1)) >> 2;
-					v_y = r_y - v_x;
-					v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-					v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-					v_z = 0;
+					f_v_x = (2 * r_y - r_x) / 4;
+					f_v_y = (r_x + (f_v_x * 2)) / 2;
 				break;
 				case Tile.NE:
-					v_y = (r_x + r_y) / 3;
-					v_x = (-r_x + (v_y << 1)) >> 1;
-					v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-					v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-					v_z = this.virtual_world_tile_size - v_x;
+					f_v_x = (2 * r_y - r_x) / ((4 * a + 2) / a);
+					f_v_y = (r_x + (f_v_x * 2)) / 2;
+					f_v_z = h - f_v_x / a;
 				break;
 				case Tile.SW:
-					v_y = r_y;
-					v_x = (-r_x + (v_y << 1)) >> 1;
-					v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-					v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-					v_z = v_x;
+					f_v_x = (2 * r_y - r_x) / ((4 * a - 2) / a);
+					f_v_y = (r_x + (f_v_x * 2)) / 2;
+					f_v_z = f_v_x / a;
 				break;
 				case Tile.ES:
-					v_x = r_y;
-					v_y = (r_x + (v_x << 1)) >> 1;
-					v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-					v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-					v_z = v_y;
+					f_v_y = (2 * r_y + r_x) / ((4 * a - 2) / a);
+					f_v_x = (-r_x + (f_v_y * 2)) / 2;
+					f_v_z = f_v_y / a;
 				break;
 				case Tile.WN:
-					v_x = (r_y - r_x) / 3;
-					v_y = (r_y - v_x) >> 1;
-					v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-					v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-					v_z = -v_y + this.virtual_world_tile_size;
+					f_v_y = (2 * r_y + r_x) / ((4 * a + 2) / a);
+					f_v_x = (-r_x + (f_v_y * 2)) / 2;
+					f_v_z = h - f_v_y / a;
 				break;
 				case Tile.N:
-					if (r_y >= 2 * this.virtual_world_tile_size) {
-						r_y -= this.virtual_world_tile_size;
-						v_x = (-r_x + (r_y << 1)) >> 2;
-						v_y = r_y - v_x;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = 0;
+					if (r_y >= h + l) {
+						r_y -= h;
+						f_v_x = (2 * r_y - r_x) / 4;
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
 					} else {
-						v_y = (r_x + r_y) >> 2;
-						v_x = (r_y - (v_y << 1)) >> 1;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = -v_x - v_y + this.virtual_world_tile_size;
+						f_v_x = (2 * l * r_y - l * r_x - h * r_x) / (4 * (l + h));
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = ((l * h - f_v_x * h - h * f_v_y) / l);
 					}
 				break;
 				case Tile.S:
-					v_x = (-r_x + (r_y << 1)) >> 2;
-					v_y = r_y - v_x;
-					v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-					v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-					v_z = 0;
+					if (r_y >= l) {
+						r_y -= l / 2;
+						f_v_x = (2 * l * r_y - l * r_x + h * r_x) / (4 * (l - h));
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = ((l * h - f_v_x * h - h * f_v_y) / -l);
+					} else {
+						f_v_x = (2 * r_y - r_x) / 4;
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+					}
 				break;
 				case Tile.W:
 					if (r_x >= 0) {
-						v_x = (-r_x + (r_y << 1)) >> 2;
-						v_y = r_y - v_x;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = 0;
+						f_v_x = (2 * r_y - r_x) / 4;
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
 					} else {
-						v_y = r_y >> 1;
-						v_x = (-r_x + r_y) >> 1;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = v_x - v_y;
+						f_v_x = (2 * l * r_y - l * r_x - h * r_x) / (4 * l);
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (h * f_v_x - h * f_v_y) / l;
 					}
 				break;
+
 				case Tile.E:
 					if (r_x <= 0) {
-						v_x = (-r_x + (r_y << 1)) >> 2;
-						v_y = r_y - v_x;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = 0;
+						f_v_x = (2 * r_y - r_x) / 4;
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
 					} else {
-						v_x = r_y >> 1;
-						v_y = (r_x + r_y) >> 1;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = v_y - v_x;
+						f_v_x = (2 * l * r_y - l * r_x + h * r_x) / (4 * l);
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (h * f_v_y - h * f_v_x) / l;
 					}
 				break;
 				case Tile.WE:
-					v_y = (r_x + r_y + (this.virtual_world_tile_size << 1)) >> 2;
-					v_x = (-r_x + (v_y << 1)) >> 1;
-					v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-					v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-					v_z = -v_x - v_y + (this.virtual_world_tile_size << 1);
+					if (r_y > h) {
+						r_y += l;
+						f_v_x = (2 * l * r_y - l * r_x - h * r_x) / (4 * (l + h));
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (h * f_v_x + h * f_v_y - 2 * h * l) / -l;
+					} else {
+						f_v_x = (2 * l * r_y - l * r_x + h * r_x) / (4 * (l - h));
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (h * f_v_x + h * f_v_y) / l;
+					}
 				break;
 				case Tile.NS:
 					if (r_x <= 0) {
-						v_x = r_y >> 1;
-						v_y = (r_x + r_y) >> 1;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = -v_x + v_y + this.virtual_world_tile_size;
+						f_v_x = (2 * l * r_y - l * r_x + h * r_x) / (4 * l);
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (l * h - h * f_v_x + h * f_v_y) / l;
 					} else {
-						v_y = r_y >> 1;
-						v_x = (r_y - r_x) >> 1;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = v_x - v_y + this.virtual_world_tile_size;
+						f_v_x = (2 * l * r_y - l * r_x - h * r_x) / (4 * l);
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (-l * h + h * f_v_y - h * f_v_x) / -l;
 					}
 				break;
 				case Tile.NES:
-					if (r_x <= 0) {
-						v_x = r_y >> 1;
-						v_y = (r_x + r_y) >> 1;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = -v_x + v_y + this.virtual_world_tile_size;
+					if (r_x < 0) {
+						f_v_x = (2 * l * r_y - l * r_x + h * r_x) / (4 * l);
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (l * h - h * f_v_x + h * f_v_y) / l;
 					} else {
-						v_x = (-r_x + (r_y << 1)) >> 2;
-						v_y = r_y - v_x;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = this.virtual_world_tile_size;
+						f_v_x = (2 * r_y - r_x) / 4;
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = h;
 					}
 				break;
 				case Tile.SWN:
 					if (r_x <= 0) {
-						v_x = (-r_x + (r_y << 1)) >> 2;
-						v_y = r_y - v_x;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = this.virtual_world_tile_size;
+						f_v_x = (2 * r_y - r_x) / 4;
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = h;
 					} else {
-						v_y = r_y >> 1;
-						v_x = (r_y - r_x) >> 1;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = v_x - v_y + this.virtual_world_tile_size;
+						f_v_x = (2 * l * r_y - l * r_x - h * r_x) / (4 * l);
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (-l * h + h * f_v_y - h * f_v_x) / -l;
 					}
 				break;
 				case Tile.ESW:
-					r_y += this.virtual_world_tile_size;
-					v_x = (-r_x + (r_y << 1)) >> 2;
-					v_y = r_y - v_x;
-					v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-					v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-					v_z = this.virtual_world_tile_size;
+					if (r_y >= h) {
+						r_y += h;
+						f_v_x = (2 * r_y - r_x) / 4;
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = h;
+					} else {
+						f_v_x = (2 * l * r_y - l * r_x + h * r_x) / (4 * (l - h));
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (h * f_v_x + h * f_v_y) / l;
+					}
 				break;
 				case Tile.WNE:
-					if (r_y <= this.virtual_world_tile_size) {
-						v_x = (-r_x + (r_y << 1)) >> 2;
-						v_y = r_y - v_x;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = this.virtual_world_tile_size;
+					if (r_y <= l) {
+						f_v_x = (2 * r_y - r_x) / 4;
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = h;
 					} else {
-						r_y -= this.virtual_world_tile_size;
-						v_y = (r_x + r_y + (this.virtual_world_tile_size << 1)) >> 2;
-						v_x = (-r_x + (v_y << 1)) >> 1;
-						v_x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_x);
-						v_y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, v_y);
-						v_z = -v_x - v_y + (this.virtual_world_tile_size << 1);
+						r_y += h;
+						f_v_x = (2 * l * r_y - l * r_x - h * r_x) / (4 * (l + h));
+						f_v_y = (r_x + (f_v_x * 2)) / 2;
+						f_v_z = (h * f_v_x + h * f_v_y - 2 * h * l) / -l;
 					}
 				break;
 				default:
 					assert (false);
 			}
-			fine_coordinates.x = v_x;
-			fine_coordinates.y = v_y;
-			fine_coordinates.z = UIsoEngine.clamp(0, this.virtual_world_tile_size, v_z) + min_z * this.virtual_world_tile_size;
+			fine_coordinates.x = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, MathUtils.round(f_v_x));
+			fine_coordinates.y = UIsoEngine.clamp(0, this.virtual_world_tile_size - 1, MathUtils.round(f_v_y));
+			fine_coordinates.z = UIsoEngine.clamp(0, this.slope_height, MathUtils.round(f_v_z));
 		}
 
 		return this.map.tiles[tile_y][tile_x];

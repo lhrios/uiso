@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -20,29 +20,29 @@
 package uiso_awt_demo.object;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Map;
 
 import uiso.Sprite;
+import uiso.UIsoEngine;
 import uiso_awt_demo.simulation.SimulationConstants;
 
 public class Wall extends MySpriteObject<Wall.WallType> {
 	/* Public: */
 	public static enum WallType {
+
 		//@formatter:off
-		X(SimulationConstants.TILE_VIRTUAL_SIZE, 8, 96, Alignment.CENTER_ALIGNMENT, Alignment.CENTER_ALIGNMENT), 
-		CROSS(SimulationConstants.TILE_VIRTUAL_SIZE, SimulationConstants.TILE_VIRTUAL_SIZE, 96, Alignment.CENTER_ALIGNMENT, Alignment.CENTER_ALIGNMENT), 
-		Y(8, SimulationConstants.TILE_VIRTUAL_SIZE, 96, Alignment.CENTER_ALIGNMENT, Alignment.CENTER_ALIGNMENT),  
-		X_GATE_BEFORE(8, 8, 96, Alignment.LEFT_ALIGNMENT, Alignment.CENTER_ALIGNMENT), 
-		X_GATE_AFTER(8, 8, 96, Alignment.RIGHT_ALIGNMENT, Alignment.CENTER_ALIGNMENT), 
-		Y_GATE_BEFORE(8, 8, 96, Alignment.CENTER_ALIGNMENT, Alignment.LEFT_ALIGNMENT), 
-		Y_GATE_AFTER(8, 8, 96, Alignment.CENTER_ALIGNMENT, Alignment.RIGHT_ALIGNMENT);
+		X(SimulationConstants.TILE_VIRTUAL_SIZE, 8, Alignment.CENTER_ALIGNMENT, Alignment.CENTER_ALIGNMENT), 
+		CROSS(SimulationConstants.TILE_VIRTUAL_SIZE, SimulationConstants.TILE_VIRTUAL_SIZE, Alignment.CENTER_ALIGNMENT, Alignment.CENTER_ALIGNMENT), 
+		Y(8, SimulationConstants.TILE_VIRTUAL_SIZE, Alignment.CENTER_ALIGNMENT, Alignment.CENTER_ALIGNMENT),  
+		X_GATE_BEFORE(8, 8, Alignment.LEFT_ALIGNMENT, Alignment.CENTER_ALIGNMENT), 
+		X_GATE_AFTER(8, 8, Alignment.RIGHT_ALIGNMENT, Alignment.CENTER_ALIGNMENT), 
+		Y_GATE_BEFORE(8, 8, Alignment.CENTER_ALIGNMENT, Alignment.LEFT_ALIGNMENT), 
+		Y_GATE_AFTER(8, 8, Alignment.CENTER_ALIGNMENT, Alignment.RIGHT_ALIGNMENT);
 		//@formatter:on
 
-		private WallType(int w, int h, int l, Alignment x_alignment, Alignment y_alignment) {
+		private WallType(int w, int h, Alignment x_alignment, Alignment y_alignment) {
 			this.w = w;
 			this.h = h;
-			this.l = l;
 			this.x_alignment = x_alignment;
 			this.y_alignment = y_alignment;
 		}
@@ -87,31 +87,13 @@ public class Wall extends MySpriteObject<Wall.WallType> {
 			return offset;
 		}
 
-		public void setBoundingBox(Sprite sprite) {
-			sprite.setBoundingBoxOffsetZ(0);
-			sprite.setBoundingBoxL(this.l);
-			sprite.setBoundingBoxOffsetX(-2);
-			sprite.setBoundingBoxOffsetY(-2);
-			sprite.setBoundingBoxH(this.h - 4);
-			sprite.setBoundingBoxW(this.w - 4);
-		}
-
-		private int w, h, l;
+		/* Private: */
+		private int w, h;
 		private Alignment x_alignment, y_alignment;
 	}
 
 	public static Map<Integer, Sprite> createSprites() {
-		Map<Integer, Sprite> sprites = Common.createSpritesFromImage("wall.png", 125, 157, Arrays.asList(WallType.values()), 1);
-
-		Iterator<Sprite> i = sprites.values().iterator();
-		WallType.X.setBoundingBox(i.next());
-		WallType.CROSS.setBoundingBox(i.next());
-		WallType.Y.setBoundingBox(i.next());
-		WallType.X_GATE_AFTER.setBoundingBox(i.next());
-		WallType.X_GATE_BEFORE.setBoundingBox(i.next());
-		WallType.Y_GATE_AFTER.setBoundingBox(i.next());
-		WallType.Y_GATE_BEFORE.setBoundingBox(i.next());
-
+		Map<Integer, Sprite> sprites = Common.createSpritesFromImage("wall.png", 64, 157, Arrays.asList(WallType.values()), 1);
 		return sprites;
 	}
 
@@ -120,7 +102,7 @@ public class Wall extends MySpriteObject<Wall.WallType> {
 	}
 
 	@Override
-	public void update(int tick) {
+	public void update(UIsoEngine uiso_engine, int tick) {
 	}
 
 	@Override

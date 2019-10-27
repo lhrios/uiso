@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -26,6 +26,8 @@ import java.awt.Frame;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import uiso_awt_demo.gui.GUIConstants;
+import uiso_awt_demo.gui.OptionPane;
 import uiso_awt_demo.simulation.SimulationConstants;
 import uiso_awt_demo.simulation.SimulationCoordinator;
 
@@ -45,12 +47,17 @@ public class MainFrameManager implements WindowListener {
 		if (main_frame_manager == null) {
 			main_frame_manager = new MainFrameManager();
 
-			main_frame_manager.frame = new Frame("uIso Demonstration");
+			boolean debug = 0 == OptionPane.showDialog("Do you want to debug?", GUIConstants.WINDOW_TITLE, "Yes", "No");
+
+			main_frame_manager.frame = new Frame(GUIConstants.WINDOW_TITLE);
 			main_frame_manager.frame.setLayout(new BorderLayout());
-			main_frame_manager.simulation_coordinator = new SimulationCoordinator();
+			main_frame_manager.simulation_coordinator = new SimulationCoordinator(debug);
 
 			main_frame_manager.simulation_coordinator.getCanvas().setPreferredSize(new Dimension(SimulationConstants.CANVAS_W, SimulationConstants.CANVAS_H));
 			main_frame_manager.frame.add(main_frame_manager.simulation_coordinator.getCanvas(), BorderLayout.CENTER);
+			if (debug) {
+				main_frame_manager.frame.add(main_frame_manager.simulation_coordinator.getDebugInformationPanel(), BorderLayout.SOUTH);
+			}
 
 			main_frame_manager.frame.pack();
 			main_frame_manager.frame.setResizable(false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -19,7 +19,6 @@
 
 package uiso_awt_demo.object;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,8 +26,7 @@ import uiso.Sprite;
 import uiso.SpriteObject;
 import uiso_awt_demo.simulation.SimulationConstants;
 
-public abstract class MySpriteObject<E extends Enum<E>> extends SpriteObject {
-
+public abstract class MySpriteObject<E extends Enum<E>> extends SpriteObject implements AnimatedObject {
 	/* Public: */
 	public static Map<ObjectType, Map<Integer, Sprite>> sprites = new HashMap<ObjectType, Map<Integer, Sprite>>();
 
@@ -37,24 +35,6 @@ public abstract class MySpriteObject<E extends Enum<E>> extends SpriteObject {
 		sprites.put(ObjectType.TERRAFORM_ICON, TerraformIcon.createSprites());
 		sprites.put(ObjectType.MINOTAUR, Minotaur.createSprites());
 	}
-
-	public static void setBoundingBox(Collection<Sprite> sprites, int offset_x, int offset_y, int offset_z, int w, int h, int l) {
-		for (Sprite s : sprites) {
-			setBoundingBox(s, offset_x, offset_y, offset_z, w, h, l);
-		}
-	}
-
-	public static void setBoundingBox(Sprite s, int offset_x, int offset_y, int offset_z, int w, int h, int l) {
-		s.setBoundingBoxOffsetX(offset_x);
-		s.setBoundingBoxOffsetY(offset_y);
-		s.setBoundingBoxOffsetZ(offset_z);
-
-		s.setBoundingBoxW(w);
-		s.setBoundingBoxH(h);
-		s.setBoundingBoxL(l);
-	}
-
-	public abstract void update(int tick);
 
 	public void setObjectType(ObjectType objectType) {
 		int ordinal = objectType.ordinal();

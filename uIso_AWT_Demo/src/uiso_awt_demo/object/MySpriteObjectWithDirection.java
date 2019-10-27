@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Luis Henrique O. Rios
+ * Copyright 2012, 2015 Luis Henrique O. Rios
  *
  * This file is part of uIsometric Engine.
  *
@@ -20,7 +20,7 @@
 package uiso_awt_demo.object;
 
 public abstract class MySpriteObjectWithDirection extends MySpriteObject<Direction> {
-
+	/* Public: */
 	@Override
 	public Direction getEnumFromOrdinal(int ordinal) {
 		return Direction.values()[ordinal];
@@ -33,5 +33,4 @@ public abstract class MySpriteObjectWithDirection extends MySpriteObject<Directi
 	public Direction getDirection() {
 		return super.getEnum();
 	}
-
 }
